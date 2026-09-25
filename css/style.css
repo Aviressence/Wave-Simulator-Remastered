@@ -792,6 +792,24 @@ select {
   to { visibility: hidden; }
 }
 
+/* Slider readouts double as buttons for typing an exact value */
+.range-container [data-label][role="button"] {
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+}
+
+.range-container [data-label][role="button"]:hover,
+.range-container [data-label][role="button"]:focus-visible {
+  border-bottom-color: #888;
+  outline: none;
+}
+
+.text-field.range-edit {
+  width: 64px;
+  padding: 1px 4px;
+  font-size: 13px;
+}
+
 /* Text buttons */
 
 .text-button {

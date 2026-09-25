@@ -34,6 +34,9 @@ const VISIBILITY = {
   isCustomArray: p => p.phasedArray.mode === 'custom'
 }
 
+/** Sliders whose values must stay whole numbers when typed. */
+const COUNT_PATHS = ['backgroundShape.sides', 'backgroundShape.slitCount', 'phasedArray.count', 'grid.divisions']
+
 /** Effects that are too heavy to run on every slider tick: applied on release. */
 const ON_RELEASE = ['shape', 'array']
 
@@ -142,6 +145,8 @@ class Toolbar {
       }
     }
 
+    this.bindValueEditors()
+
     this.$('wave-type').addEventListener('change', e => {
       const type = Number(e.target.value)
       const ic = this.params.initialCondition
@@ -152,6 +157,76 @@ class Toolbar {
       this.app.save()
       this.app.refresh()
     })
+  }
+
+  /**
+   * The number next to each slider can be clicked to type an exact value:
+   * a slider 150 px wide cannot land on, say, exactly 45 of 360 degrees.
+   * Enter or leaving the box commits, Escape cancels.
+   */
+  bindValueEditors() {
+    for (const label of this.root.querySelectorAll('.range-container [data-label]')) {
+      const range = label.parentElement.querySelector('input[type="range"]')
+      if (!range) {
+        continue
+      }
+      label.tabIndex = 0
+      label.setAttribute('role', 'button')
+      label.title = 'Click to type a value'
+      const open = () => this.editValue(label, range)
+      label.addEventListener('click', open)
+      label.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          open()
+        }
+      })
+    }
+  }
+
+  editValue(label, range) {
+    const path = range.dataset.path
+    const box = document.createElement('input')
+    box.type = 'text'
+    box.inputMode = 'decimal'
+    box.className = 'text-field range-edit'
+    box.value = `${getPath(this.params, path)}`
+    box.setAttribute('aria-label', `${label.parentElement.querySelector('.range-label')?.textContent ?? 'Value'}, ${range.min} to ${range.max}`)
+    label.hidden = true
+    label.after(box)
+    box.focus()
+    box.select()
+
+    let done = false
+    const close = commit => {
+      if (done) return
+      done = true
+      const value = Number(box.value.trim().replace(',', '.'))
+      box.remove()
+      label.hidden = false
+      label.focus({ preventScroll: true })
+      if (!commit || box.value.trim() === '' || !Number.isFinite(value)) {
+        return
+      }
+      const min = Number(range.min)
+      const max = Number(range.max)
+      const step = Number(range.step)
+      let next = clamp(value, min, max)
+      // Counts (sides, slits, elements, divisions) keep to their steps; the
+      // others take any typed value, rounded to 4 decimals, so an angle can
+      // be 22.5 even though its slider moves in whole degrees.
+      next = COUNT_PATHS.includes(path)
+        ? clamp(min + Math.round((next - min) / step) * step, min, max)
+        : Math.round(next * 10000) / 10000
+      next = clampTyped(path, next)
+      setPath(this.params, path, next)
+      this.apply(range.dataset.effect)
+    }
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); close(true) }
+      if (e.key === 'Escape') { e.preventDefault(); close(false) }
+    })
+    box.addEventListener('blur', () => close(true))
   }
 
   /** What each data-effect means. */
@@ -306,7 +381,13 @@ class Toolbar {
         submenu: [
           {
             label: 'Polygons',
-            submenu: Shapes.POLYGON_SIDES.map(sides => shapeItem({ ...defaultShape('polygon'), sides: sides }))
+            // Polygons start with a corner at the top. For 4 and 8 sides that
+            // reads as a diamond, so those are turned to sit on a flat edge.
+            submenu: Shapes.POLYGON_SIDES.map(sides => shapeItem({
+              ...defaultShape('polygon'),
+              sides: sides,
+              rotation: sides % 4 === 0 ? 180 / sides : 0
+            }))
           },
           ...Shapes.OTHER_KINDS.map(kind => shapeItem(defaultShape(kind)))
         ]

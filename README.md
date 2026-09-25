@@ -133,6 +133,9 @@ path taints the canvas, and WebGL refuses to upload a tainted canvas.
 | <kbd>S</kbd> | Save a PNG |
 | <kbd>V</kbd> | Start / stop a live recording |
 
+To type an exact value, such as a 45° rotation, click the number next to any
+slider.
+
 On the canvas, scroll to zoom and drag with the middle or right mouse button to
 pan. Double-click resets the view. To move a pulse or spherical source, drag its
 marker.
