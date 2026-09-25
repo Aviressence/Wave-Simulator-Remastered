@@ -1,27 +1,62 @@
 # Wave Simulator (Remastered)
 
-A 2D wave simulator that runs in your browser on the GPU. This is a
-plain HTML/CSS/JavaScript port of
-[starrfree/wave-simulator](https://github.com/starrfree/wave-simulator). The
-original is an Angular app. See [CREDITS.md](CREDITS.md).
+A 2D wave simulator that runs in your browser on the GPU. It is based on
+[starrfree/wave-simulator](https://github.com/starrfree/wave-simulator) and
+extends it with new mechanics, physics fixes and a security rework. It is
+rebuilt as a single folder of plain HTML/CSS/JavaScript: double-click
+`index.html` and it runs.
 
-New in the remaster: the **Phased Array** initial condition. It runs up to 16
-sources, each with its own phase offset, so the beam can be steered. It also
-adds a black/white grid colour option.
+**[What's new](#whats-new) · [Security](SECURITY.md) · [Credits](CREDITS.md)**
 
-## Physics fixes over the original
+## What's new
 
-Both fixes were measured in the running simulation. The numbers below are the
-measurements.
+Everything below is compared with the original project.
 
-- **Right and top edges were off by one cell.** They treated the
-  second-to-last cell as the edge, so a centred pulse bouncing off the walls
-  came back 10–14 % lopsided. The simulation is now mirror-symmetric to within
-  float rounding (0.001 %).
-- **The "Absorb" edge reflected about 21 % of a wave.** Its rule only fits
-  waves that move one cell per step, and this solver moves them 0.7. Edge
-  cells now follow the one-way wave equation (first-order upwind). Reflection
-  is 1.5–3.5 %, and the scheme stays stable.
+### New mechanics
+
+- **Phased array:** up to 16 sources, each with its own phase offset.
+  - *Linear array* mode steers the beam to any angle; the phases are computed
+    for you.
+  - *Custom* mode lets you place each source by hand and set its phase.
+- **Procedural shapes:** triangle through decagon, star, circle, ellipse and
+  an adjustable N-slit barrier. They replace the uneven bitmap templates.
+  Shapes are hollow by default, and you can set their size, rotation, wall
+  strength and thickness, or invert them.
+- **Grid:** always-square cells laid out from the centre. It has a
+  black/white colour option and a snap setting. Hold <kbd>Ctrl</kbd> to snap
+  the interactive pulse to the grid.
+- **Draggable sources:** drag pulse and spherical sources on the canvas. A
+  live coordinate readout shows where you are.
+- **Zoom and pan:** scroll to zoom up to 20x, and drag with the middle or
+  right mouse button to pan.
+- **Full-window simulation:** no black letterbox bars, and nothing is
+  stretched.
+- **Panel placement:** dock the side panel left or right.
+- **Sharing:** copy a link to the current scene, save the frame as a PNG, and
+  use keyboard shortcuts.
+- **No setup:** no Node, no npm, no build. It works offline.
+
+### Fixed
+
+- The Duration and y fields wrote to the same stored value, so editing one
+  overwrote the other.
+- *Reset parameters to default* changed the defaults themselves, so resetting
+  restored your last settings instead.
+- GPU textures were never freed. Every resize or detail change leaked memory.
+- Shaders were downloaded at start-up, so the app could not run from a file.
+- **Right and top edges were off by one cell.** A centred pulse bouncing off
+  the walls came back 10–14 % lopsided. The simulation is now mirror-symmetric
+  to within float rounding (0.001 %).
+- **The Absorb edge reflected about 21 % of a wave.** Its rule assumed waves
+  move one cell per step, but this solver moves them 0.7. Edge cells now follow
+  the one-way wave equation, so reflection is 1.5–3.5 % and the simulation
+  stays stable.
+
+### Security
+
+The original depended on the no-longer-supported Angular 13 and Node 16. This
+version has **no dependencies at all**, and the page cannot contact any
+server. Details are in [SECURITY.md](SECURITY.md).
 
 ## Validation
 
@@ -72,29 +107,12 @@ page cannot satisfy, so modules would leave a blank page.
 The PNGs in `assets/` are the source. After you change one, run:
 
 ```
+python tools/generate_assets.py
 python tools/embed_assets.py
 ```
 
 The images have to be embedded as data URLs. An image loaded from a `file://`
 path taints the canvas, and WebGL refuses to upload a tainted canvas.
-
-## Security
-
-- **Content Security Policy** (in `index.html`) allows scripts, styles and
-  fonts only from this folder, and images only from embedded data. It blocks
-  every network request, so the page cannot fetch or send anything.
-- **Every untrusted input is sanitised.** That covers shared links, saved
-  settings and typed values. Each number is range-checked against a limit the
-  GPU can handle, and unknown fields are dropped.
-- **A shared link cannot reference outside images.** Only bundled assets are
-  allowed. Before this, a crafted link could make the recipient's browser
-  request an arbitrary URL.
-- **No third-party requests.** Fonts, icons and images all ship with the page,
-  so opening it does not send the visitor's IP address anywhere.
-- **Uploads** must be real PNG/JPEG/GIF/WebP/BMP images, up to 15 MB and
-  8192 px on a side. SVG is rejected.
-- **User-supplied text** (file names) is only ever set with `textContent`,
-  never as HTML.
 
 ## Controls
 

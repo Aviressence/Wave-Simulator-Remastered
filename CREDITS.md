@@ -5,10 +5,14 @@
 **Wave Simulator** by Eliott Morgensztern ([starrfree](https://github.com/starrfree))
 <https://github.com/starrfree/wave-simulator>
 
-This remaster started from that project. The wave-equation solver, the GLSL
-shaders, the bundled background and gradient images, the interface and the
-documentation all come from it. The remaster turns the Angular app into plain
-HTML/CSS/JavaScript and adds the features listed below.
+This remaster started from that project. The core wave-equation solver, the
+lens, parabola, Fresnel lens, empty and colour-gradient images, the overall
+look of the interface, and parts of the documentation come from it.
+
+The remaster, by Aviressence, adds procedural shapes, the grid, draggable
+sources, zoom and pan, scene links, the phased array, several bug and physics
+fixes, and the security rework. It also rebuilds the app as plain
+HTML/CSS/JavaScript. The full list is in the [README](README.md#whats-new).
 
 ## Ideas
 
