@@ -50,6 +50,16 @@
 
   <div id="error" class="error-panel" hidden></div>
 
+  <!-- Shown while a video renders -->
+  <div id="render-overlay" class="render-overlay" hidden>
+    <div class="render-panel" role="dialog" aria-modal="true" aria-labelledby="render-title">
+      <div id="render-title" class="render-title">Rendering video</div>
+      <div class="render-bar"><div class="render-bar-fill" id="render-fill"></div></div>
+      <div class="render-status" id="render-status">Starting</div>
+      <button type="button" class="text-button" id="btn-render-cancel">Cancel</button>
+    </div>
+  </div>
+
   <!-- Toolbar -->
   <aside id="toolbar">
     <div class="top-container">
@@ -371,8 +381,39 @@
       </div>
       <div class="field-container hint" id="share-warning" hidden>Uploaded images cannot travel in a link; the default is used instead.</div>
       <div class="field-container hint">
-        Shortcuts: <b>Space</b> pause, <b>R</b> restart, <b>N</b> step, <b>G</b> grid, <b>0</b> reset view, <b>S</b> save PNG.
+        Shortcuts: <b>Space</b> pause, <b>R</b> restart, <b>N</b> step, <b>G</b> grid, <b>0</b> reset view, <b>S</b> save PNG, <b>V</b> record video.
       </div>
+    </div>
+
+    <!-- Video -->
+    <div class="divider"></div>
+    <div class="field-group">
+      <div class="field-container section-label">Video</div>
+      <div class="field-container">
+        <label class="text-field-label" for="video-seconds">Length (seconds)</label>
+        <input type="text" inputmode="decimal" id="video-seconds" class="text-field" data-path="video.seconds" data-effect="save">
+      </div>
+      <div class="field-container radio-label">Frame rate</div>
+      <div class="field-container radio-row">
+        <input type="radio" id="fps-30" name="video-fps" value="30" data-path="video.fps" data-effect="save"><label for="fps-30">30 fps</label>
+        <input type="radio" id="fps-60" name="video-fps" value="60" data-path="video.fps" data-effect="save"><label for="fps-60">60 fps</label>
+      </div>
+      <div class="field-container radio-label">Simulation speed</div>
+      <div class="field-container radio-row">
+        <input type="radio" id="vspeed-1" name="video-speed" value="1" data-path="video.speed" data-effect="save"><label for="vspeed-1">1x</label>
+        <input type="radio" id="vspeed-2" name="video-speed" value="2" data-path="video.speed" data-effect="save"><label for="vspeed-2">2x</label>
+        <input type="radio" id="vspeed-4" name="video-speed" value="4" data-path="video.speed" data-effect="save"><label for="vspeed-4">4x</label>
+      </div>
+      <div class="field-container checkbox-field">
+        <input type="checkbox" id="video-from-start" data-path="video.fromStart" data-effect="save">
+        <label for="video-from-start">Start from the beginning</label>
+      </div>
+      <div class="field-container button-row">
+        <button type="button" class="text-button" id="btn-render">Render video</button>
+        <button type="button" class="text-button" id="btn-record" aria-pressed="false">Record live</button>
+      </div>
+      <div class="field-container hint" id="video-hint" hidden></div>
+      <div class="field-container hint"><b>Render</b> computes the video as fast as your GPU allows, so you don't have to watch it. <b>Record live</b> captures what you see, including your clicks. Only the simulation is in the video, not the grid or markers.</div>
     </div>
 
     <!-- Grid -->
@@ -422,6 +463,9 @@
   <script src="js/phased-array.js"></script>
   <script src="js/shapes.js"></script>
   <script src="js/share.js"></script>
+  <script src="js/recorder.js"></script>
+  <script src="js/mp4.js"></script>
+  <script src="js/video-render.js"></script>
   <script src="js/scene.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/toolbar.js"></script>

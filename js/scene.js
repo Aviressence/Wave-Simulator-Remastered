@@ -61,6 +61,9 @@ class SceneCanvas {
     this.gridKey = ''
     /** Decoded bitmaps, keyed by src, so a resize does not decode them again. */
     this.imageCache = new Map()
+    this.video = new VideoRecorder()
+    /** True while a video render owns the simulation. */
+    this.rendering = false
 
     this.bindEvents()
   }
@@ -732,6 +735,10 @@ class SceneCanvas {
 
   frame(time) {
     requestAnimationFrame(t => this.frame(t))
+    // A video render drives the simulation itself; stay out of its way.
+    if (this.rendering) {
+      return
+    }
     const params = this.params
     if (this.resetPending) {
       this.resetPending = false
@@ -749,6 +756,8 @@ class SceneCanvas {
         // Same frame as the draw: the buffer is gone by the next one.
         this.captureScreenshot()
       }
+      // Same reason: the video frame is copied right after the draw.
+      this.video.frame(this.canvas)
     }
     this.renders++
 

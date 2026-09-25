@@ -22,6 +22,8 @@ const LIMITS = Object.freeze({
   sharpness: [0.001, 100],
   duration: [0, 100000],
   aCeil: [0, 1],
+  /** Rendered video length; 140 s is the longest video X/Twitter accepts. */
+  seconds: [1, 140],
   phasedArray: {
     count: [1, 16],
     spacing: [0.1, 2],
@@ -151,6 +153,7 @@ function makeDefaultParameters(isMobile) {
     initialCondition: defaultInitialCondition(WaveType.Plane),
     grid: { show: false, snap: true, divisions: 12, color: 'white' },
     phasedArray: defaultPhasedArray(),
+    video: { seconds: 10, fps: 60, speed: 1, fromStart: true },
     view: { zoom: 1, centreX: 0.5, centreY: 0.5 },
     aCeil: 1,
     speedDivider: 1
@@ -276,6 +279,18 @@ function sanitizeShape(raw) {
   }
 }
 
+function sanitizeVideo(raw, d) {
+  if (!raw || typeof raw !== 'object') {
+    return { ...d }
+  }
+  return {
+    seconds: num(raw.seconds, LIMITS.seconds, d.seconds),
+    fps: oneOf(raw.fps, [30, 60], d.fps),
+    speed: oneOf(raw.speed, [1, 2, 4], d.speed),
+    fromStart: bool(raw.fromStart, d.fromStart)
+  }
+}
+
 /**
  * Builds a complete, valid parameter set out of anything. Unknown keys are
  * dropped rather than copied, so nothing unexpected can ride along.
@@ -305,6 +320,7 @@ function sanitizeParameters(raw, options) {
       color: oneOf(grid.color, GRID_COLORS, d.grid.color)
     },
     phasedArray: sanitizePhasedArray(raw.phasedArray),
+    video: sanitizeVideo(raw.video, d.video),
     view: clampView(raw.view && typeof raw.view === 'object' ? raw.view : d.view),
     aCeil: num(raw.aCeil, LIMITS.aCeil, d.aCeil),
     speedDivider: oneOf(raw.speedDivider, SPEED_VALUES, d.speedDivider)

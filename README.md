@@ -32,6 +32,10 @@ Everything below is compared with the original project.
 - **Full-window simulation:** no black letterbox bars, and nothing is
   stretched.
 - **Panel placement:** dock the side panel left or right.
+- **Video export:** *Render video* computes an MP4 as fast as your GPU allows,
+  at an exact 30 or 60 fps, from the first frame, so you don't have to watch
+  it. *Record live* captures what you see, clicks included. Both give MP4 in
+  Chrome and Edge, ready to post on X.
 - **Sharing:** copy a link to the current scene, save the frame as a PNG, and
   use keyboard shortcuts.
 - **No setup:** no Node, no npm, no build. It works offline.
@@ -96,6 +100,9 @@ requests: the fonts are in `fonts/` and the icons are inline SVG.
 | `js/scene.js` | WebGL simulation loop and canvas overlay |
 | `js/menu.js` | Cascading dropdown menu |
 | `js/toolbar.js` | Side-panel wiring |
+| `js/video-render.js` | Offline video rendering with WebCodecs |
+| `js/mp4.js` | Minimal MP4 writer for the rendered video |
+| `js/recorder.js` | Live recording with MediaRecorder |
 | `js/app.js` | Ties everything together, keyboard shortcuts |
 
 The scripts are classic `<script src>` tags, not ES modules, and the order in
@@ -124,6 +131,7 @@ path taints the canvas, and WebGL refuses to upload a tainted canvas.
 | <kbd>G</kbd> | Toggle the grid |
 | <kbd>0</kbd> | Reset the view |
 | <kbd>S</kbd> | Save a PNG |
+| <kbd>V</kbd> | Start / stop a live recording |
 
 On the canvas, scroll to zoom and drag with the middle or right mouse button to
 pan. Double-click resets the view. To move a pulse or spherical source, drag its

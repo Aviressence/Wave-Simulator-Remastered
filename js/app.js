@@ -69,6 +69,82 @@ const App = {
     this.params.nextFrame += 5
   },
 
+  /**
+   * Starts or stops a video recording. A timer keeps the button's clock
+   * ticking; the file downloads once the recorder has flushed.
+   */
+  toggleRecording() {
+    const video = this.scene.video
+    if (video.recording) {
+      video.stop()
+      return
+    }
+    if (!VideoRecorder.supported) {
+      return
+    }
+    video.onFinished = ({ isMp4 }) => {
+      clearInterval(this.recordTimer)
+      this.toolbar.showVideoHint(isMp4 ? '' :
+        'This browser can only record WebM. X/Twitter needs MP4: record in Chrome or Edge, or convert the file.')
+      this.refresh()
+    }
+    this.toolbar.showVideoHint('Only the simulation is recorded, not the grid or markers. Recording runs at the speed you see.')
+    video.start(this.scene.canvas)
+    // Recording a paused simulation would just hold one frame.
+    this.params.pause = false
+    this.recordTimer = setInterval(() => this.toolbar.renderRecording(), 500)
+    this.refresh()
+  },
+
+  /**
+   * Renders the configured video offline and downloads it. A modal overlay
+   * shows progress and blocks edits, since changing the scene mid-render
+   * would change the video.
+   */
+  async renderVideo() {
+    if (this.scene.rendering) {
+      return
+    }
+    if (this.scene.video.recording) {
+      this.scene.video.stop()
+    }
+    const overlay = document.getElementById('render-overlay')
+    const fill = document.getElementById('render-fill')
+    const status = document.getElementById('render-status')
+    const cancel = document.getElementById('btn-render-cancel')
+    const controller = new AbortController()
+    cancel.onclick = () => controller.abort()
+    const settings = { ...this.params.video }
+    const started = performance.now()
+
+    fill.style.width = '0%'
+    status.textContent = 'Starting'
+    overlay.hidden = false
+    cancel.focus()
+    this.toolbar.showVideoHint('')
+    try {
+      const renderer = new VideoRenderer(this.scene)
+      const blob = await renderer.render(settings, fraction => {
+        fill.style.width = `${(fraction * 100).toFixed(1)}%`
+        const seconds = (performance.now() - started) / 1000
+        const left = fraction > 0.02 ? Math.round((seconds / fraction) * (1 - fraction)) : null
+        status.textContent = `${Math.round(fraction * 100)}%` + (left !== null ? `, about ${left} s left` : '')
+      }, controller.signal)
+      if (blob) {
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+        downloadUrl(URL.createObjectURL(blob), `wave-${stamp}.mp4`, true)
+        const took = ((performance.now() - started) / 1000).toFixed(1)
+        this.toolbar.showVideoHint(`Saved a ${settings.seconds} s video (${(blob.size / 1048576).toFixed(1)} MB) in ${took} s.`)
+      }
+    } catch (e) {
+      console.error(e)
+      this.toolbar.showVideoHint(`Rendering failed: ${e.message || e}`)
+    } finally {
+      overlay.hidden = true
+      this.refresh()
+    }
+  },
+
   resetAll() {
     SavedSettings.clear()
     this.params = makeDefaultParameters(IS_MOBILE)
@@ -83,7 +159,7 @@ const App = {
     // chords alone.
     const target = event.target
     const tag = target?.tagName
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable || Menu.layer) {
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable || Menu.layer || this.scene.rendering) {
       return
     }
     if (event.ctrlKey || event.metaKey || event.altKey) {
@@ -121,6 +197,10 @@ const App = {
       case 's':
       case 'S':
         this.scene.requestScreenshot()
+        break
+      case 'v':
+      case 'V':
+        this.toggleRecording()
         break
       default:
         return
